@@ -4,6 +4,7 @@ import "github.com/confluentinc/confluent-kafka-go/kafka"
 
 func (c *Container) initConfig(config kafka.ConfigMap) (newConfig kafka.ConfigMap) {
 	if config != nil {
+		newConfig = kafka.ConfigMap{}
 		c.appendConfigMap(c.configMap, newConfig)
 		c.appendConfigMap(config, newConfig)
 	} else {

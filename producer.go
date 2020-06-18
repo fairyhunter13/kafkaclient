@@ -11,3 +11,9 @@ type Producer struct {
 func (p *Producer) GetOrigin() *kafka.Producer {
 	return p.Producer
 }
+
+// Close close the underlying resources.
+func (p *Producer) Close() (err error) {
+	p.Producer.Close()
+	return
+}
