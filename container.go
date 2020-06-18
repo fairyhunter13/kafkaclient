@@ -6,7 +6,9 @@ import (
 
 // Container contains all variables and configs to run kafka.
 type Container struct {
-	configMap kafka.ConfigMap
+	configMap        kafka.ConfigMap
+	closeSignal      chan bool
+	resourcesCounter uint64
 }
 
 // NewContainer initialize a new container.
@@ -15,7 +17,8 @@ func NewContainer(config kafka.ConfigMap) *Container {
 		config = kafka.ConfigMap{}
 	}
 	return &Container{
-		configMap: config,
+		configMap:   config,
+		closeSignal: make(chan bool),
 	}
 }
 
@@ -27,6 +30,7 @@ func (c *Container) NewProducer(config kafka.ConfigMap) (prod *Producer, err err
 		return
 	}
 	prod = &Producer{originProducer}
+	c.close(prod)
 	return
 }
 
@@ -38,6 +42,7 @@ func (c *Container) NewConsumer(config kafka.ConfigMap) (cons *Consumer, err err
 		return
 	}
 	cons = &Consumer{originCons}
+	c.close(cons)
 	return
 }
 
@@ -49,5 +54,6 @@ func (c *Container) NewAdminClient(config kafka.ConfigMap) (ac *AdminClient, err
 		return
 	}
 	ac = &AdminClient{originAC}
+	c.close(ac)
 	return
 }

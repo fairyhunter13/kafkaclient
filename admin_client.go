@@ -11,3 +11,9 @@ type AdminClient struct {
 func (ac *AdminClient) GetOrigin() *kafka.AdminClient {
 	return ac.AdminClient
 }
+
+// Close close the underlying resources.
+func (ac *AdminClient) Close() (err error) {
+	ac.AdminClient.Close()
+	return
+}
