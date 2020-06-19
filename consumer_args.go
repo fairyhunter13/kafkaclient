@@ -14,13 +14,6 @@ type ConsumeArgs struct {
 	EventHandler EventHandler
 }
 
-func (c *ConsumeArgs) fixArgs() *ConsumeArgs {
-	if c.Polling < 0 {
-		c.Polling = 0
-	}
-	return c
-}
-
 // SetTopics is a setter.
 func (c *ConsumeArgs) SetTopics(topics []string) *ConsumeArgs {
 	c.Topics = topics
@@ -36,7 +29,6 @@ func (c *ConsumeArgs) SetRebalanceCb(cb kafka.RebalanceCb) *ConsumeArgs {
 // SetPolling is a setter.
 func (c *ConsumeArgs) SetPolling(polling int) *ConsumeArgs {
 	c.Polling = polling
-	c.fixArgs()
 	return c
 }
 
