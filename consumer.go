@@ -25,7 +25,6 @@ func (c *Consumer) GetOrigin() *kafka.Consumer {
 
 // Consume consumes the messages from the kafka broker using MessageHandler.
 func (c *Consumer) Consume(args ConsumeArgs) (err error) {
-	args.fixArgs()
 	err = c.SubscribeTopics(args.Topics, args.RebalanceCb)
 	if err != nil {
 		return
@@ -49,7 +48,6 @@ func (c *Consumer) Consume(args ConsumeArgs) (err error) {
 
 // ConsumeEvent consumes the events from the kafka broker using EventHandler.
 func (c *Consumer) ConsumeEvent(args ConsumeArgs) (err error) {
-	args.fixArgs()
 	err = c.SubscribeTopics(args.Topics, args.RebalanceCb)
 	if err != nil {
 		return
