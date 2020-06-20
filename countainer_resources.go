@@ -1,16 +1,21 @@
 package kafkaclient
 
 import (
+	"sync"
 	"sync/atomic"
-
-	"github.com/panjf2000/ants/v2"
 )
 
 // Close all resources regarding the current instance.
 func (c *Container) Close() {
-	for index := uint64(0); index <= atomic.LoadUint64(&c.resourcesCounter); index++ {
-		c.closeSignal <- true
+	wg := new(sync.WaitGroup)
+	for index := uint64(1); index <= atomic.LoadUint64(&c.resourcesCounter); index++ {
+		wg.Add(1)
+		go func() {
+			wg.Done()
+			c.closeSignal <- true
+		}()
 	}
+	wg.Wait()
 	close(c.closeSignal)
 }
 
@@ -20,8 +25,8 @@ func (c *Container) addResourcesCounter() {
 
 func (c *Container) close(instance Closer) {
 	c.addResourcesCounter()
-	ants.Submit(func() {
+	go func(instance Closer) {
 		<-c.closeSignal
 		instance.Close()
-	})
+	}(instance)
 }

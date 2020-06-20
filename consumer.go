@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"github.com/panjf2000/ants/v2"
 )
 
 // Consumer promotes the origin consumer of kafka client.
@@ -31,7 +30,7 @@ func (c *Consumer) Consume(args ConsumeArgs) (err error) {
 	}
 
 	for numWorker := uint64(1); numWorker <= args.Workers; numWorker++ {
-		ants.Submit(func() {
+		go func(args ConsumeArgs) {
 			var (
 				err error
 				msg *kafka.Message
@@ -40,7 +39,7 @@ func (c *Consumer) Consume(args ConsumeArgs) (err error) {
 				msg, err = c.ReadMessage(time.Duration(args.Polling) * time.Millisecond)
 				args.Handler(c, msg, err)
 			}
-		})
+		}(args)
 	}
 
 	return
@@ -54,7 +53,7 @@ func (c *Consumer) ConsumeEvent(args ConsumeArgs) (err error) {
 	}
 
 	for numWorker := uint64(1); numWorker <= args.Workers; numWorker++ {
-		ants.Submit(func() {
+		go func(args ConsumeArgs) {
 			var (
 				event kafka.Event
 			)
@@ -62,7 +61,7 @@ func (c *Consumer) ConsumeEvent(args ConsumeArgs) (err error) {
 				event = c.Poll(args.Polling)
 				args.EventHandler(c, event)
 			}
-		})
+		}(args)
 	}
 	return
 }
