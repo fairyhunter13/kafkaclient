@@ -22,46 +22,40 @@ func (c *Consumer) GetOrigin() *kafka.Consumer {
 	return c.Consumer
 }
 
-// Consume consumes the messages from the kafka broker using MessageHandler.
-func (c *Consumer) Consume(args ConsumeArgs) (err error) {
+func (c *Consumer) consume(args ConsumeArgs) (err error) {
 	err = c.SubscribeTopics(args.Topics, args.RebalanceCb)
 	if err != nil {
 		return
 	}
 
-	for numWorker := uint64(1); numWorker <= args.Workers; numWorker++ {
-		go func(args ConsumeArgs) {
-			var (
-				err error
-				msg *kafka.Message
-			)
-			for {
-				msg, err = c.ReadMessage(time.Duration(args.Polling) * time.Millisecond)
-				args.Handler(c, msg, err)
-			}
-		}(args)
-	}
+	go func(c *Consumer, args ConsumeArgs) {
+		var (
+			err error
+			msg *kafka.Message
+		)
+		for {
+			msg, err = c.ReadMessage(time.Duration(args.Polling) * time.Millisecond)
+			args.Handler(c, msg, err)
+		}
+	}(c, args)
 
 	return
 }
 
-// ConsumeEvent consumes the events from the kafka broker using EventHandler.
-func (c *Consumer) ConsumeEvent(args ConsumeArgs) (err error) {
+func (c *Consumer) consumeEvent(args ConsumeArgs) (err error) {
 	err = c.SubscribeTopics(args.Topics, args.RebalanceCb)
 	if err != nil {
 		return
 	}
 
-	for numWorker := uint64(1); numWorker <= args.Workers; numWorker++ {
-		go func(args ConsumeArgs) {
-			var (
-				event kafka.Event
-			)
-			for {
-				event = c.Poll(args.Polling)
-				args.EventHandler(c, event)
-			}
-		}(args)
-	}
+	go func(c *Consumer, args ConsumeArgs) {
+		var (
+			event kafka.Event
+		)
+		for {
+			event = c.Poll(args.Polling)
+			args.EventHandler(c, event)
+		}
+	}(c, args)
 	return
 }

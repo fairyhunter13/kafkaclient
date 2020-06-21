@@ -34,6 +34,18 @@ func (c *Container) NewProducer(config kafka.ConfigMap) (prod *Producer, err err
 	return
 }
 
+// NewAdminClient initialize a new admin client from this container.
+func (c *Container) NewAdminClient(config kafka.ConfigMap) (ac *AdminClient, err error) {
+	newConfig := c.initConfig(config)
+	originAC, err := kafka.NewAdminClient(&newConfig)
+	if err != nil {
+		return
+	}
+	ac = &AdminClient{originAC}
+	c.close(ac)
+	return
+}
+
 // NewConsumer initialize a new consumer from this container.
 func (c *Container) NewConsumer(config kafka.ConfigMap) (cons *Consumer, err error) {
 	newConfig := c.initConfig(config)
@@ -46,14 +58,36 @@ func (c *Container) NewConsumer(config kafka.ConfigMap) (cons *Consumer, err err
 	return
 }
 
-// NewAdminClient initialize a new admin client from this container.
-func (c *Container) NewAdminClient(config kafka.ConfigMap) (ac *AdminClient, err error) {
-	newConfig := c.initConfig(config)
-	originAC, err := kafka.NewAdminClient(&newConfig)
-	if err != nil {
-		return
+// Consume create consumers based on per thread and directly consume messages from the Kafka broker.
+func (c *Container) Consume(config kafka.ConfigMap, args ConsumeArgs) (consList []*Consumer, err error) {
+	for numWorker := uint64(1); numWorker <= args.Workers; numWorker++ {
+		var cons *Consumer
+		cons, err = c.NewConsumer(config)
+		if err != nil {
+			return
+		}
+		err = cons.consume(args)
+		if err != nil {
+			return
+		}
+		consList = append(consList, cons)
 	}
-	ac = &AdminClient{originAC}
-	c.close(ac)
+	return
+}
+
+// ConsumeEvent create consumers based on per thread and directly consume events from the Kafka broker.
+func (c *Container) ConsumeEvent(config kafka.ConfigMap, args ConsumeArgs) (consList []*Consumer, err error) {
+	for numWorker := uint64(1); numWorker <= args.Workers; numWorker++ {
+		var cons *Consumer
+		cons, err = c.NewConsumer(config)
+		if err != nil {
+			return
+		}
+		err = cons.consumeEvent(args)
+		if err != nil {
+			return
+		}
+		consList = append(consList, cons)
+	}
 	return
 }
