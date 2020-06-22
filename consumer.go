@@ -1,8 +1,6 @@
 package kafkaclient
 
 import (
-	"time"
-
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
@@ -15,7 +13,7 @@ type Consumer struct {
 type EventHandler func(cons *Consumer, event kafka.Event)
 
 // MessageHandler is a handler for handling message.
-type MessageHandler func(cons *Consumer, msg *kafka.Message, err error)
+type MessageHandler func(cons *Consumer, msg *kafka.Message)
 
 // GetOrigin returns the origin consumer of kafka.
 func (c *Consumer) GetOrigin() *kafka.Consumer {
@@ -29,13 +27,12 @@ func (c *Consumer) consume(args ConsumeArgs) (err error) {
 	}
 
 	go func(c *Consumer, args ConsumeArgs) {
-		var (
-			err error
-			msg *kafka.Message
-		)
 		for {
-			msg, err = c.ReadMessage(time.Duration(args.Polling) * time.Millisecond)
-			args.Handler(c, msg, err)
+			event := c.Poll(args.Polling)
+			switch realType := event.(type) {
+			case *kafka.Message:
+				args.Handler(c, realType)
+			}
 		}
 	}(c, args)
 
@@ -49,11 +46,39 @@ func (c *Consumer) consumeEvent(args ConsumeArgs) (err error) {
 	}
 
 	go func(c *Consumer, args ConsumeArgs) {
-		var (
-			event kafka.Event
-		)
 		for {
-			event = c.Poll(args.Polling)
+			event := c.Poll(args.Polling)
+			args.EventHandler(c, event)
+		}
+	}(c, args)
+	return
+}
+
+func (c *Consumer) consumeBatch(args ConsumeArgs) (err error) {
+	err = c.SubscribeTopics(args.Topics, args.RebalanceCb)
+	if err != nil {
+		return
+	}
+
+	go func(c *Consumer, args ConsumeArgs) {
+		for event := range c.Events() {
+			switch realType := event.(type) {
+			case *kafka.Message:
+				args.Handler(c, realType)
+			}
+		}
+	}(c, args)
+	return
+}
+
+func (c *Consumer) consumeEventBatch(args ConsumeArgs) (err error) {
+	err = c.SubscribeTopics(args.Topics, args.RebalanceCb)
+	if err != nil {
+		return
+	}
+
+	go func(c *Consumer, args ConsumeArgs) {
+		for event := range c.Events() {
 			args.EventHandler(c, event)
 		}
 	}(c, args)
