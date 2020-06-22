@@ -1,6 +1,8 @@
 package kafkaclient
 
 import (
+	"time"
+
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
@@ -9,6 +11,9 @@ type Producer struct {
 	*kafka.Producer
 }
 
+// TimeoutFlush specifies the flush's timeout for the producer.
+var TimeoutFlush = 5 * time.Second
+
 // GetOrigin returns the producer origin from kafka.
 func (p *Producer) GetOrigin() *kafka.Producer {
 	return p.Producer
@@ -16,6 +21,7 @@ func (p *Producer) GetOrigin() *kafka.Producer {
 
 // Close close the underlying resources.
 func (p *Producer) Close() (err error) {
+	p.Producer.Flush(int(TimeoutFlush.Milliseconds()))
 	p.Producer.Close()
 	return
 }
