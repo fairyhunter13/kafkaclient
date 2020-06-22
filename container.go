@@ -57,37 +57,3 @@ func (c *Container) NewConsumer(config kafka.ConfigMap) (cons *Consumer, err err
 	c.close(cons)
 	return
 }
-
-// Consume create consumers based on per thread and directly consume messages from the Kafka broker.
-func (c *Container) Consume(config kafka.ConfigMap, args ConsumeArgs) (consList []*Consumer, err error) {
-	for numWorker := uint64(1); numWorker <= args.Workers; numWorker++ {
-		var cons *Consumer
-		cons, err = c.NewConsumer(config)
-		if err != nil {
-			return
-		}
-		err = cons.consume(args)
-		if err != nil {
-			return
-		}
-		consList = append(consList, cons)
-	}
-	return
-}
-
-// ConsumeEvent create consumers based on per thread and directly consume events from the Kafka broker.
-func (c *Container) ConsumeEvent(config kafka.ConfigMap, args ConsumeArgs) (consList []*Consumer, err error) {
-	for numWorker := uint64(1); numWorker <= args.Workers; numWorker++ {
-		var cons *Consumer
-		cons, err = c.NewConsumer(config)
-		if err != nil {
-			return
-		}
-		err = cons.consumeEvent(args)
-		if err != nil {
-			return
-		}
-		consList = append(consList, cons)
-	}
-	return
-}
