@@ -46,7 +46,7 @@ func (c *Container) ConsumeEvent(config kafka.ConfigMap, args ConsumeArgs) (cons
 func (c *Container) ConsumeBatch(config kafka.ConfigMap, args ConsumeArgs) (consList []*Consumer, err error) {
 	for numWorker := uint64(1); numWorker <= args.Workers; numWorker++ {
 		var cons *Consumer
-		newConfig := c.initConfig(config)
+		newConfig := c.cloneConfig(config)
 		newConfig[GoEventsChannelEnable] = true
 		cons, err = c.NewConsumer(newConfig)
 		if err != nil {
@@ -66,7 +66,7 @@ func (c *Container) ConsumeBatch(config kafka.ConfigMap, args ConsumeArgs) (cons
 func (c *Container) ConsumeEventBatch(config kafka.ConfigMap, args ConsumeArgs) (consList []*Consumer, err error) {
 	for numWorker := uint64(1); numWorker <= args.Workers; numWorker++ {
 		var cons *Consumer
-		newConfig := c.initConfig(config)
+		newConfig := c.cloneConfig(config)
 		newConfig[GoEventsChannelEnable] = true
 		cons, err = c.NewConsumer(newConfig)
 		if err != nil {
