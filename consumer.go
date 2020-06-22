@@ -10,10 +10,12 @@ type Consumer struct {
 }
 
 // EventHandler is a handler for handling event.
-type EventHandler func(cons *Consumer, event kafka.Event)
+// It will automatically retry the handler for the current message if it returns error.
+type EventHandler func(cons *Consumer, event kafka.Event) (err error)
 
 // MessageHandler is a handler for handling message.
-type MessageHandler func(cons *Consumer, msg *kafka.Message)
+// It will automatically retry the handler for the current event if it returns error.
+type MessageHandler func(cons *Consumer, msg *kafka.Message) (err error)
 
 // GetOrigin returns the origin consumer of kafka.
 func (c *Consumer) GetOrigin() *kafka.Consumer {
@@ -31,7 +33,7 @@ func (c *Consumer) consume(args ConsumeArgs) (err error) {
 			event := c.Poll(args.Polling)
 			switch realType := event.(type) {
 			case *kafka.Message:
-				args.Handler(c, realType)
+				c.handleMessage(realType, &args)
 			}
 		}
 	}(c, args)
@@ -48,7 +50,7 @@ func (c *Consumer) consumeEvent(args ConsumeArgs) (err error) {
 	go func(c *Consumer, args ConsumeArgs) {
 		for {
 			event := c.Poll(args.Polling)
-			args.EventHandler(c, event)
+			c.handleEvent(event, &args)
 		}
 	}(c, args)
 	return
@@ -64,7 +66,7 @@ func (c *Consumer) consumeBatch(args ConsumeArgs) (err error) {
 		for event := range c.Events() {
 			switch realType := event.(type) {
 			case *kafka.Message:
-				args.Handler(c, realType)
+				c.handleMessage(realType, &args)
 			}
 		}
 	}(c, args)
@@ -79,8 +81,22 @@ func (c *Consumer) consumeEventBatch(args ConsumeArgs) (err error) {
 
 	go func(c *Consumer, args ConsumeArgs) {
 		for event := range c.Events() {
-			args.EventHandler(c, event)
+			c.handleEvent(event, &args)
 		}
 	}(c, args)
 	return
+}
+
+func (c *Consumer) handleMessage(msg *kafka.Message, args *ConsumeArgs) {
+	err := args.Handler(c, msg)
+	for err != nil {
+		err = args.Handler(c, msg)
+	}
+}
+
+func (c *Consumer) handleEvent(event kafka.Event, args *ConsumeArgs) {
+	err := args.EventHandler(c, event)
+	for err != nil {
+		err = args.EventHandler(c, event)
+	}
 }
