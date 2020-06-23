@@ -2,11 +2,6 @@ package kafkaclient
 
 import "github.com/confluentinc/confluent-kafka-go/kafka"
 
-// List of const for consumers
-const (
-	GoEventsChannelEnable = "go.events.channel.enable"
-)
-
 // Consume create consumers based on per thread and directly consume messages from the Kafka broker.
 func (c *Container) Consume(config kafka.ConfigMap, args ConsumeArgs) (consList []*Consumer, err error) {
 	for numWorker := uint64(1); numWorker <= args.Workers; numWorker++ {
