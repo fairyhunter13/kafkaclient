@@ -2,8 +2,9 @@ package kafkaclient
 
 // List of const for consumers
 const (
-	GoEventsChannelEnable = "go.events.channel.enable"
-	ClientID              = "client.id"
+	GoEventsChannelEnable        = "go.events.channel.enable"
+	GoApplicationRebalanceEnable = "go.application.rebalance.enable"
+	ClientID                     = "client.id"
 )
 
 // List of resources type

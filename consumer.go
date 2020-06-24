@@ -34,6 +34,10 @@ func (c *Consumer) consume(args ConsumeArgs) (err error) {
 			switch realType := event.(type) {
 			case *kafka.Message:
 				c.handleMessage(realType, &args)
+			case kafka.AssignedPartitions:
+				c.Assign(realType.Partitions)
+			case kafka.RevokedPartitions:
+				c.Unassign()
 			}
 		}
 	}(c, args)
@@ -67,6 +71,10 @@ func (c *Consumer) consumeBatch(args ConsumeArgs) (err error) {
 			switch realType := event.(type) {
 			case *kafka.Message:
 				c.handleMessage(realType, &args)
+			case kafka.AssignedPartitions:
+				c.Assign(realType.Partitions)
+			case kafka.RevokedPartitions:
+				c.Unassign()
 			}
 		}
 	}(c, args)
