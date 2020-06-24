@@ -62,10 +62,10 @@ func (c *Container) ConsumeBatch(config kafka.ConfigMap, args ConsumeArgs) (cons
 // ConsumeEventBatch create consumers based on per thread and directly consume events from the Kafka broker.
 // ConsumeEventBatch is an upgraded version of ConsumeEvent with the batch processing.
 func (c *Container) ConsumeEventBatch(config kafka.ConfigMap, args ConsumeArgs) (consList []*Consumer, err error) {
+	newConfig := c.cloneConfig(config)
+	newConfig[GoEventsChannelEnable] = true
 	for numWorker := uint64(1); numWorker <= args.Workers; numWorker++ {
 		var cons *Consumer
-		newConfig := c.cloneConfig(config)
-		newConfig[GoEventsChannelEnable] = true
 		cons, err = c.NewConsumer(newConfig)
 		if err != nil {
 			return
