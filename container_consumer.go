@@ -4,9 +4,11 @@ import "github.com/confluentinc/confluent-kafka-go/kafka"
 
 // Consume create consumers based on per thread and directly consume messages from the Kafka broker.
 func (c *Container) Consume(config kafka.ConfigMap, args ConsumeArgs) (consList []*Consumer, err error) {
+	newConfig := c.cloneConfig(config)
+	newConfig[GoApplicationRebalanceEnable] = true
 	for numWorker := uint64(1); numWorker <= args.Workers; numWorker++ {
 		var cons *Consumer
-		cons, err = c.NewConsumer(config)
+		cons, err = c.NewConsumer(newConfig)
 		if err != nil {
 			return
 		}
@@ -39,10 +41,11 @@ func (c *Container) ConsumeEvent(config kafka.ConfigMap, args ConsumeArgs) (cons
 // ConsumeBatch create consumers based on per thread and directly consume messages from the Kafka broker.
 // ConsumeBatch is an improved version of Consume but polling in a batch manner.
 func (c *Container) ConsumeBatch(config kafka.ConfigMap, args ConsumeArgs) (consList []*Consumer, err error) {
+	newConfig := c.cloneConfig(config)
+	newConfig[GoEventsChannelEnable] = true
+	newConfig[GoApplicationRebalanceEnable] = true
 	for numWorker := uint64(1); numWorker <= args.Workers; numWorker++ {
 		var cons *Consumer
-		newConfig := c.cloneConfig(config)
-		newConfig[GoEventsChannelEnable] = true
 		cons, err = c.NewConsumer(newConfig)
 		if err != nil {
 			return
