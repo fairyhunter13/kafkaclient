@@ -7,11 +7,11 @@ import (
 
 // Close all resources regarding the current instance.
 func (c *Container) Close() {
-	wg := new(sync.WaitGroup)
+	var wg sync.WaitGroup
 	for index := uint64(1); index <= atomic.LoadUint64(&c.resourcesCounter); index++ {
 		wg.Add(1)
 		go func() {
-			wg.Done()
+			defer wg.Done()
 			c.closeSignal <- true
 		}()
 	}
